@@ -1,0 +1,8 @@
+*.ts eol=lf
+*.tsx eol=lf
+*.json eol=lf
+*.example eol=lf
+*.gitignore eol=lf
+*.css eol=lf
+*.js eol=lf
+*.sql eol=lf
