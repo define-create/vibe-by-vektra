@@ -18,7 +18,8 @@
       "Bash(git checkout:*)",
       "Bash(git push:*)",
       "Bash(git count-objects:*)",
-      "Bash(gh:*)"
+      "Bash(gh:*)",
+      "WebFetch(domain:vibe-by-vektra.vercel.app)"
     ]
   }
 }
