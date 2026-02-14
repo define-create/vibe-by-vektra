@@ -1,18 +1,17 @@
+/**
+ * Session Logging Page - Updated with Zen Precision styling
+ */
+
 import { QuickLogForm } from '@/components/session-log/QuickLogForm';
+import { ScreenContainer } from '@/src/components/layout/ScreenContainer';
 
 export default function HomePage() {
   return (
-    <main className="min-h-screen p-6 max-w-2xl mx-auto">
-      <div className="pt-8 pb-6 space-y-2">
-        <h1 className="text-2xl font-light tracking-tight text-foreground">
-          Log Session
-        </h1>
-        <p className="text-sm text-muted-foreground">
-          Quick post-session reflection
-        </p>
-      </div>
-
+    <ScreenContainer
+      title="Log Session"
+      subtitle="Quick post-session reflection"
+    >
       <QuickLogForm />
-    </main>
+    </ScreenContainer>
   );
 }

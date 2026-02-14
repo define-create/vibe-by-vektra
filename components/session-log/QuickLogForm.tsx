@@ -27,15 +27,16 @@ export function QuickLogForm() {
     setValue,
     handleSubmit,
     reset,
-    formState: { errors },
+    formState: { errors, isValid },
   } = useForm<SessionLogFormData>({
     resolver: zodResolver(sessionLogSchema),
+    mode: 'onChange', // Validate on change
     defaultValues: {
       playedAt: new Date(),
-      energyBefore: 0,
-      energyAfter: 0,
-      moodBefore: 0,
-      moodAfter: 0,
+      energyBefore: 3, // Changed from 0 to 3 (mid-point)
+      energyAfter: 3,   // Changed from 0 to 3 (mid-point)
+      moodBefore: 3,    // Changed from 0 to 3 (mid-point)
+      moodAfter: 3,     // Changed from 0 to 3 (mid-point)
       sorenessKnees: 0,
       sorenessShoulder: 0,
       sorenessBack: 0,
@@ -143,10 +144,10 @@ export function QuickLogForm() {
       setTimeout(() => {
         reset({
           playedAt: new Date(),
-          energyBefore: 0,
-          energyAfter: 0,
-          moodBefore: 0,
-          moodAfter: 0,
+          energyBefore: 3,  // Reset to mid-point, not 0
+          energyAfter: 3,   // Reset to mid-point, not 0
+          moodBefore: 3,    // Reset to mid-point, not 0
+          moodAfter: 3,     // Reset to mid-point, not 0
           sorenessKnees: 0,
           sorenessShoulder: 0,
           sorenessBack: 0,
@@ -238,7 +239,28 @@ export function QuickLogForm() {
       />
 
       {/* Submit Button */}
-      <div className="fixed bottom-16 left-0 right-0 p-4 bg-background border-t border-border">
+      <div className="fixed bottom-16 left-0 right-0 p-4 bg-background border-t border-border z-40">
+        {/* Show validation errors if any */}
+        {Object.keys(errors).length > 0 && (
+          <div className="mb-3 p-3 bg-destructive/10 border border-destructive/20 rounded-lg">
+            <p className="text-sm text-destructive font-medium">Please fix the following:</p>
+            <ul className="mt-2 space-y-1">
+              {errors.energyBefore && (
+                <li className="text-xs text-destructive">• {errors.energyBefore.message}</li>
+              )}
+              {errors.energyAfter && (
+                <li className="text-xs text-destructive">• {errors.energyAfter.message}</li>
+              )}
+              {errors.moodBefore && (
+                <li className="text-xs text-destructive">• {errors.moodBefore.message}</li>
+              )}
+              {errors.moodAfter && (
+                <li className="text-xs text-destructive">• {errors.moodAfter.message}</li>
+              )}
+            </ul>
+          </div>
+        )}
+
         <Button
           type="submit"
           disabled={isSaving}

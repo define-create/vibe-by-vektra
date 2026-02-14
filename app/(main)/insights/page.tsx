@@ -1,14 +1,24 @@
+/**
+ * Insights Page - Zen Precision redesign with preserved functionality
+ * Timeline narrative view for AI-generated insights
+ */
+
 'use client';
 
 import { useState, useEffect } from 'react';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { useAuth } from '@/lib/hooks/useAuth';
 import { getAnonId } from '@/lib/utils/anon-id';
 import { localDB } from '@/lib/db/local-db';
-import { GenerateButton } from '@/components/insights/GenerateButton';
-import { GuestLockedState } from '@/components/insights/GuestLockedState';
-import { InsightsList } from '@/components/insights/InsightsList';
 import { InsightArtifact, InsightRun } from '@/types';
-import { Skeleton } from '@/components/ui/skeleton';
+import { ScreenContainer } from '@/src/components/layout/ScreenContainer';
+import { VerticalStack } from '@/src/components/layout/VerticalStack';
+import { TimelineBlock } from '@/src/components/domain/TimelineBlock';
+import { Card } from '@/src/components/ui/Card';
+import { Button } from '@/src/components/ui/Button';
+import { IconButton } from '@/src/components/ui/IconButton';
+import { Skeleton } from '@/src/components/ui/Skeleton';
+import { GuestLockedState } from '@/components/insights/GuestLockedState';
 
 export default function InsightsPage() {
   const { mode, user } = useAuth();
@@ -22,8 +32,8 @@ export default function InsightsPage() {
   const [latestRun, setLatestRun] = useState<InsightRun | null>(null);
   const [insights, setInsights] = useState<InsightArtifact[]>([]);
   const [error, setError] = useState<string | null>(null);
+  const [currentRange, setCurrentRange] = useState('Last 14 days');
 
-  // Fetch quota status on mount
   useEffect(() => {
     fetchQuotaStatus();
     if (user) {
@@ -49,8 +59,6 @@ export default function InsightsPage() {
   }
 
   async function fetchLatestInsights() {
-    // TODO: Implement fetching latest insights from Supabase
-    // For now, this is a placeholder
     setIsLoading(false);
   }
 
@@ -60,7 +68,6 @@ export default function InsightsPage() {
     try {
       const anonId = mode === 'guest' ? getAnonId() : null;
 
-      // For guest mode, fetch sessions from IndexedDB and send them
       let guestSessions = null;
       if (mode === 'guest') {
         const localSessions = await localDB.sessionLogs.toArray();
@@ -104,7 +111,6 @@ export default function InsightsPage() {
         return;
       }
 
-      // Update quota status
       if (data.quotaUsed !== undefined) {
         setQuotaStatus((prev) =>
           prev
@@ -117,12 +123,10 @@ export default function InsightsPage() {
         );
       }
 
-      // Update insights
       if (data.artifacts) {
         setInsights(data.artifacts);
         setLatestRun(data.run);
       } else if (data.insights) {
-        // Guest mode response
         setInsights(data.insights);
       }
     } catch (err) {
@@ -136,75 +140,141 @@ export default function InsightsPage() {
     (quotaStatus?.daily && quotaStatus.daily.used >= quotaStatus.daily.limit) ||
     false;
 
-  const getDisabledReason = () => {
-    if (quotaStatus?.isGuest && quotaStatus?.guestUsed) {
-      return 'Guest quota used';
-    }
-    if (quotaStatus?.daily && quotaStatus.daily.used >= quotaStatus.daily.limit) {
-      return 'Daily limit reached';
-    }
-    return undefined;
-  };
+  const hasInsights = insights.length > 0;
 
   return (
-    <main className="min-h-screen p-6 max-w-4xl mx-auto pb-24">
-      <div className="pt-8 pb-6 space-y-2">
-        <h1 className="text-2xl font-light tracking-tight text-foreground">
-          Insights
-        </h1>
-        <p className="text-sm text-muted-foreground">
-          AI-powered pattern analysis
-        </p>
-      </div>
-
+    <ScreenContainer
+      title="Insights"
+      subtitle="AI-powered pattern analysis & guidance"
+      rightActions={
+        hasInsights ? (
+          <div className="flex items-center gap-xs">
+            <IconButton icon={<ChevronLeft size={20} />} label="Previous period" />
+            <span className="text-meta text-text-secondary px-sm">{currentRange}</span>
+            <IconButton icon={<ChevronRight size={20} />} label="Next period" />
+          </div>
+        ) : undefined
+      }
+    >
       {isLoading ? (
-        <div className="space-y-4">
-          <Skeleton className="h-12 w-full" />
-          <Skeleton className="h-32 w-full" />
-          <Skeleton className="h-32 w-full" />
-        </div>
+        <VerticalStack spacing="lg">
+          <Skeleton className="h-24 w-full" />
+          <Skeleton className="h-48 w-full" />
+          <Skeleton className="h-64 w-full" />
+        </VerticalStack>
       ) : (
-        <div className="space-y-6">
-          {/* Guest locked state */}
-          {quotaStatus?.isGuest && quotaStatus?.guestUsed ? (
-            <GuestLockedState />
-          ) : (
-            /* Generate button */
-            quotaStatus && (
-              <GenerateButton
-                onGenerate={handleGenerate}
-                quotaUsed={quotaStatus.daily.used}
-                quotaLimit={quotaStatus.daily.limit}
-                isDisabled={isQuotaExceeded}
-                disabledReason={getDisabledReason()}
-              />
-            )
+        <VerticalStack spacing="lg">
+          {/* Generate Button or Guest Locked State */}
+          {!hasInsights && (
+            <>
+              {quotaStatus?.isGuest && quotaStatus?.guestUsed ? (
+                <GuestLockedState />
+              ) : quotaStatus ? (
+                <Card variant="default" padding="default" className="space-y-md">
+                  <div className="space-y-sm">
+                    <h3 className="text-section text-text-primary">Generate Insights</h3>
+                    <p className="text-body text-text-secondary">
+                      Analyze your recent sessions to discover patterns and get personalized
+                      recommendations.
+                    </p>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-meta-sm text-text-disabled">
+                      Daily quota: {quotaStatus.daily.used}/{quotaStatus.daily.limit}
+                    </span>
+                    <Button
+                      variant="primary"
+                      size="lg"
+                      onClick={handleGenerate}
+                      disabled={isQuotaExceeded}
+                    >
+                      Generate Insights
+                    </Button>
+                  </div>
+                </Card>
+              ) : null}
+
+              {error && (
+                <Card variant="default" padding="default" className="bg-semantic-alert/10">
+                  <p className="text-body text-semantic-alert">{error}</p>
+                </Card>
+              )}
+
+              {!error && (
+                <div className="text-center py-xl">
+                  <p className="text-body text-text-secondary">
+                    No insights yet. Log at least 3 sessions, then generate your first insight.
+                  </p>
+                </div>
+              )}
+            </>
           )}
 
-          {/* Error message */}
-          {error && (
-            <div className="p-4 rounded-lg bg-destructive/10 text-destructive text-sm">
-              {error}
-            </div>
-          )}
+          {/* Insights Timeline View */}
+          {hasInsights && (
+            <>
+              {/* Insight Thesis Hero */}
+              <Card variant="callout" padding="default" className="space-y-sm">
+                <h2 className="text-title text-text-primary">
+                  {insights[0]?.title || 'Your session insights are ready'}
+                </h2>
+                <p className="text-body text-text-secondary">
+                  {insights[0]?.content?.substring(0, 200) ||
+                    'Based on your recent sessions, we\'ve identified key patterns.'}
+                </p>
+                {latestRun && (
+                  <div className="flex items-center gap-md pt-sm">
+                    <div className="space-y-xs">
+                      <span className="text-meta-sm text-text-disabled">Sessions Analyzed</span>
+                      <span className="text-meta text-text-primary font-medium block">
+                        {latestRun.sessionsCount || 0}
+                      </span>
+                    </div>
+                    <div className="space-y-xs">
+                      <span className="text-meta-sm text-text-disabled">Generated</span>
+                      <span className="text-meta text-text-primary font-medium block">
+                        {new Date(latestRun.createdAt).toLocaleDateString()}
+                      </span>
+                    </div>
+                  </div>
+                )}
+              </Card>
 
-          {/* Insights list */}
-          {insights.length > 0 ? (
-            <InsightsList
-              insights={insights}
-              runDate={latestRun?.createdAt}
-              sessionsCount={latestRun?.sessionsCount}
-            />
-          ) : (
-            <div className="text-center py-12">
-              <p className="text-muted-foreground">
-                No insights yet. Log at least 3 sessions, then generate your
-                first insight.
+              {/* Timeline Blocks */}
+              <div className="space-y-xs">
+                <h3 className="text-section text-text-primary">Analysis & Recommendations</h3>
+                <VerticalStack spacing="md">
+                  {insights.map((insight, index) => (
+                    <TimelineBlock
+                      key={insight.id}
+                      item={{
+                        variant: index % 3 === 1 ? 'callout' : index % 3 === 2 ? 'guidance' : 'evidence',
+                        title: insight.title,
+                        body: insight.content,
+                      }}
+                    />
+                  ))}
+                </VerticalStack>
+              </div>
+
+              {/* Disclaimer */}
+              <p className="text-meta-sm text-text-disabled text-center italic">
+                Insights are generated by AI analyzing your session patterns. Always consult with
+                coaches and medical professionals for personalized advice.
               </p>
-            </div>
+
+              {/* Regenerate Button */}
+              {quotaStatus && !isQuotaExceeded && (
+                <div className="flex justify-center">
+                  <Button variant="secondary" onClick={handleGenerate}>
+                    Generate New Insights
+                  </Button>
+                </div>
+              )}
+            </>
           )}
-        </div>
+        </VerticalStack>
       )}
-    </main>
+    </ScreenContainer>
   );
 }

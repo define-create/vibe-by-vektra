@@ -6,3 +6,4 @@
 *.css eol=lf
 *.js eol=lf
 *.sql eol=lf
+*.md eol=lf

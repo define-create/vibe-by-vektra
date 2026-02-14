@@ -19,7 +19,9 @@
       "Bash(git push:*)",
       "Bash(git count-objects:*)",
       "Bash(gh:*)",
-      "WebFetch(domain:vibe-by-vektra.vercel.app)"
+      "WebFetch(domain:vibe-by-vektra.vercel.app)",
+      "Bash(git config:*)",
+      "Bash(git add:*)"
     ]
   }
 }

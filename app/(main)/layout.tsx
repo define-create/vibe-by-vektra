@@ -1,4 +1,8 @@
-import { MobileNav } from '@/components/layout/MobileNav';
+/**
+ * Main Layout - Updated with Zen Precision BottomNav
+ */
+
+import { BottomNav } from '@/src/components/ui/BottomNav';
 
 export default function MainLayout({
   children,
@@ -8,7 +12,7 @@ export default function MainLayout({
   return (
     <>
       {children}
-      <MobileNav />
+      <BottomNav />
     </>
   );
 }

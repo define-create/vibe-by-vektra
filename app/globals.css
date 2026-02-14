@@ -4,39 +4,107 @@
 
 @layer base {
   :root {
-    --background: 0 0% 4%;
-    --foreground: 0 0% 95%;
-    --card: 0 0% 6%;
-    --card-foreground: 0 0% 95%;
-    --popover: 0 0% 6%;
-    --popover-foreground: 0 0% 95%;
-    --primary: 0 0% 90%;
-    --primary-foreground: 0 0% 10%;
-    --secondary: 0 0% 12%;
-    --secondary-foreground: 0 0% 95%;
-    --muted: 0 0% 12%;
-    --muted-foreground: 0 0% 60%;
-    --accent: 0 0% 14%;
-    --accent-foreground: 0 0% 95%;
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 0 0% 95%;
-    --border: 0 0% 14%;
-    --input: 0 0% 14%;
-    --ring: 0 0% 20%;
-    --radius: 0.5rem;
-    --chart-1: 220 70% 50%;
-    --chart-2: 160 60% 45%;
-    --chart-3: 30 80% 55%;
-    --chart-4: 280 65% 60%;
-    --chart-5: 340 75% 55%;
+    /* Zen Precision Color Tokens */
+    --bg-primary: #0F1115;
+
+    --surface-1: #1A1C20;
+    --surface-2: #23262C;
+    --surface-3-callout: #2A2E36;
+
+    --text-primary: #ECEFF4;
+    --text-secondary: #A0A6B0;
+    --text-disabled: #6B7280;
+
+    --accent-primary: #82AAFF;
+
+    --semantic-success: #4FD1C5;
+    --semantic-warning: #F2B57B;
+    --semantic-alert: #E07A5F;
+
+    --divider: rgba(255, 255, 255, 0.06);
+    --overlay-press: rgba(255, 255, 255, 0.03);
+    --overlay-backdrop: rgba(0, 0, 0, 0.40);
+
+    /* Legacy compatibility (mapped to Zen tokens) */
+    --background: #0F1115;
+    --foreground: #ECEFF4;
+    --card: #1A1C20;
+    --card-foreground: #ECEFF4;
+    --popover: #23262C;
+    --popover-foreground: #ECEFF4;
+    --primary: #82AAFF;
+    --primary-foreground: #0F1115;
+    --secondary: #23262C;
+    --secondary-foreground: #ECEFF4;
+    --muted: #23262C;
+    --muted-foreground: #A0A6B0;
+    --accent: #82AAFF;
+    --accent-foreground: #0F1115;
+    --destructive: #E07A5F;
+    --destructive-foreground: #ECEFF4;
+    --border: rgba(255, 255, 255, 0.06);
+    --input: #23262C;
+    --ring: #82AAFF;
+
+    /* Border radius */
+    --radius: 14px;
+    --radius-sm: 8px;
+    --radius-md: 12px;
+    --radius-lg: 14px;
+
+    /* Chart colors (using Zen palette) */
+    --chart-1: #82AAFF;
+    --chart-2: #4FD1C5;
+    --chart-3: #F2B57B;
+    --chart-4: #E07A5F;
+    --chart-5: #A0A6B0;
+
+    /* Motion tokens */
+    --motion-fast: 180ms;
+    --motion-base: 240ms;
+    --motion-slow: 320ms;
+    --easing-standard: cubic-bezier(0.2, 0.8, 0.2, 1);
+    --easing-decelerate: cubic-bezier(0.0, 0.0, 0.2, 1);
+    --easing-accelerate: cubic-bezier(0.4, 0.0, 1, 1);
   }
 }
 
 @layer base {
   * {
-    @apply border-border;
+    @apply border-[var(--divider)];
   }
+
   body {
-    @apply bg-background text-foreground;
+    @apply bg-[var(--bg-primary)] text-[var(--text-primary)];
+    font-size: 17px;
+    line-height: 1.6;
+  }
+
+  /* Typography base styles for 40+ readability */
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-medium;
+  }
+}
+
+@layer utilities {
+  /* Safe area padding for mobile devices */
+  .safe-area-inset {
+    padding-top: env(safe-area-inset-top);
+    padding-bottom: env(safe-area-inset-bottom);
+    padding-left: env(safe-area-inset-left);
+    padding-right: env(safe-area-inset-right);
+  }
+
+  .safe-area-pb {
+    padding-bottom: calc(env(safe-area-inset-bottom) + 1rem);
+  }
+
+  /* Premium press feedback */
+  .press-feedback {
+    transition: transform var(--motion-fast) var(--easing-standard);
+  }
+
+  .press-feedback:active {
+    transform: scale(0.98);
   }
 }
