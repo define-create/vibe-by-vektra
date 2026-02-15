@@ -318,7 +318,7 @@ export default function InsightsPage() {
                       <Card
                         key={achievement.id}
                         variant="default"
-                        padding="compact"
+                        padding="default"
                         className={cn(
                           achievement.dismissedAt ? 'opacity-60' : ''
                         )}
