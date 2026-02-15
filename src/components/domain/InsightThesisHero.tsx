@@ -6,6 +6,7 @@
 
 'use client';
 
+import { type ReactElement } from 'react';
 import { motion } from 'framer-motion';
 import { TrendingUp, TrendingDown, Minus } from 'lucide-react';
 import { Card } from '@/src/components/ui/Card';
@@ -79,7 +80,7 @@ function getDeltaVariant(delta?: DeltaDirection): 'success' | 'warning' | 'defau
   return 'default';
 }
 
-function getDeltaIcon(delta?: DeltaDirection): JSX.Element | null {
+function getDeltaIcon(delta?: DeltaDirection): ReactElement | null {
   if (!delta) return null;
   if (delta === 'up') return <TrendingUp size={14} />;
   if (delta === 'down') return <TrendingDown size={14} />;
