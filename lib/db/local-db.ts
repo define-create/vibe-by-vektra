@@ -18,6 +18,7 @@ export interface LocalSessionLog {
   energyAfter: number;
   moodBefore: number;
   moodAfter: number;
+  sorenessHands: SorenessLevel;
   sorenessKnees: SorenessLevel;
   sorenessShoulder: SorenessLevel;
   sorenessBack: SorenessLevel;

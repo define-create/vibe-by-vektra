@@ -41,6 +41,7 @@ export function useSessionLogs(limit?: number) {
                 energyAfter: s.energy_after,
                 moodBefore: s.mood_before,
                 moodAfter: s.mood_after,
+                sorenessHands: s.soreness_hands as 0 | 1 | 2 | 3,
                 sorenessKnees: s.soreness_knees as 0 | 1 | 2 | 3,
                 sorenessShoulder: s.soreness_shoulder as 0 | 1 | 2 | 3,
                 sorenessBack: s.soreness_back as 0 | 1 | 2 | 3,

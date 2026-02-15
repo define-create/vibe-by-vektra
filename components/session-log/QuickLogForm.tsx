@@ -37,6 +37,7 @@ export function QuickLogForm() {
       energyAfter: 3,   // Changed from 0 to 3 (mid-point)
       moodBefore: 3,    // Changed from 0 to 3 (mid-point)
       moodAfter: 3,     // Changed from 0 to 3 (mid-point)
+      sorenessHands: 0,
       sorenessKnees: 0,
       sorenessShoulder: 0,
       sorenessBack: 0,
@@ -72,6 +73,7 @@ export function QuickLogForm() {
           energyAfter: data.energyAfter,
           moodBefore: data.moodBefore,
           moodAfter: data.moodAfter,
+          sorenessHands: data.sorenessHands as 0 | 1 | 2 | 3,
           sorenessKnees: data.sorenessKnees as 0 | 1 | 2 | 3,
           sorenessShoulder: data.sorenessShoulder as 0 | 1 | 2 | 3,
           sorenessBack: data.sorenessBack as 0 | 1 | 2 | 3,
@@ -100,6 +102,7 @@ export function QuickLogForm() {
           energy_after: data.energyAfter,
           mood_before: data.moodBefore,
           mood_after: data.moodAfter,
+          soreness_hands: data.sorenessHands,
           soreness_knees: data.sorenessKnees,
           soreness_shoulder: data.sorenessShoulder,
           soreness_back: data.sorenessBack,
@@ -122,6 +125,7 @@ export function QuickLogForm() {
           energyAfter: data.energyAfter,
           moodBefore: data.moodBefore,
           moodAfter: data.moodAfter,
+          sorenessHands: data.sorenessHands as 0 | 1 | 2 | 3,
           sorenessKnees: data.sorenessKnees as 0 | 1 | 2 | 3,
           sorenessShoulder: data.sorenessShoulder as 0 | 1 | 2 | 3,
           sorenessBack: data.sorenessBack as 0 | 1 | 2 | 3,
@@ -148,6 +152,7 @@ export function QuickLogForm() {
           energyAfter: 3,   // Reset to mid-point, not 0
           moodBefore: 3,    // Reset to mid-point, not 0
           moodAfter: 3,     // Reset to mid-point, not 0
+          sorenessHands: 0,
           sorenessKnees: 0,
           sorenessShoulder: 0,
           sorenessBack: 0,
@@ -206,9 +211,11 @@ export function QuickLogForm() {
 
       {/* Soreness */}
       <SorenessInput
+        hands={formValues.sorenessHands as 0 | 1 | 2 | 3}
         knees={formValues.sorenessKnees as 0 | 1 | 2 | 3}
         shoulder={formValues.sorenessShoulder as 0 | 1 | 2 | 3}
         back={formValues.sorenessBack as 0 | 1 | 2 | 3}
+        onHandsChange={(v) => setValue('sorenessHands', v)}
         onKneesChange={(v) => setValue('sorenessKnees', v)}
         onShoulderChange={(v) => setValue('sorenessShoulder', v)}
         onBackChange={(v) => setValue('sorenessBack', v)}

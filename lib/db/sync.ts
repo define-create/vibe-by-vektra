@@ -155,6 +155,7 @@ export const syncManager = {
             energyAfter: session.energy_after,
             moodBefore: session.mood_before,
             moodAfter: session.mood_after,
+            sorenessHands: session.soreness_hands,
             sorenessKnees: session.soreness_knees,
             sorenessShoulder: session.soreness_shoulder,
             sorenessBack: session.soreness_back,

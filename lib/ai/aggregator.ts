@@ -51,6 +51,7 @@ export async function aggregateSessionsForInsight(
 
   // Soreness frequency
   const sorenessFrequency = {
+    hands: computeSorenessDistribution(sessions, 'sorenessHands'),
     knees: computeSorenessDistribution(sessions, 'sorenessKnees'),
     shoulder: computeSorenessDistribution(sessions, 'sorenessShoulder'),
     back: computeSorenessDistribution(sessions, 'sorenessBack'),
@@ -169,7 +170,7 @@ export async function aggregateSessionsForInsight(
  */
 function computeSorenessDistribution(
   sessions: SessionLog[],
-  field: 'sorenessKnees' | 'sorenessShoulder' | 'sorenessBack'
+  field: 'sorenessHands' | 'sorenessKnees' | 'sorenessShoulder' | 'sorenessBack'
 ): { none: number; low: number; moderate: number; high: number } {
   return {
     none: sessions.filter((s) => s[field] === 0).length,

@@ -8,6 +8,7 @@ export const sessionLogSchema = z.object({
   energyAfter: z.number().min(1, 'Please select energy level after session').max(5),
   moodBefore: z.number().min(1, 'Please select mood before session').max(5),
   moodAfter: z.number().min(1, 'Please select mood after session').max(5),
+  sorenessHands: z.number().min(0).max(3),
   sorenessKnees: z.number().min(0).max(3),
   sorenessShoulder: z.number().min(0).max(3),
   sorenessBack: z.number().min(0).max(3),
