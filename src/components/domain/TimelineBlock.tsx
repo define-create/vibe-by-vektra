@@ -3,6 +3,7 @@
  * Variants: evidence (neutral), callout (accent bar), guidance (subtle icon)
  * Left timeline rail + marker; right content card
  * On-scroll reveal: fade + translateY
+ * Week 2 enhancement: chart support for visual evidence
  */
 
 'use client';
@@ -11,7 +12,9 @@ import { useEffect, useRef, useState } from 'react';
 import { motion } from 'framer-motion';
 import { Info } from 'lucide-react';
 import { Card } from '@/src/components/ui/Card';
+import { MicroChart } from '@/src/components/domain/MicroChart';
 import { cn } from '@/lib/utils';
+import type { ChartSeries } from '@/lib/insights/rule-based-generator';
 
 interface TimelineBlockProps {
   item: {
@@ -19,7 +22,8 @@ interface TimelineBlockProps {
     timestampLabel?: string;
     title?: string;
     body: string;
-    series?: Array<{ label: string; value: string }>;
+    series?: ChartSeries[]; // Chart data for visual evidence
+    legacySeries?: Array<{ label: string; value: string }>; // Backward compat
   };
   className?: string;
 }
@@ -92,10 +96,19 @@ export function TimelineBlock({ item, className }: TimelineBlockProps) {
           {/* Body */}
           <p className="text-body text-text-secondary">{item.body}</p>
 
-          {/* Series Data (if provided) */}
+          {/* Chart Series (Week 2 feature) */}
           {item.series && item.series.length > 0 && (
+            <div className="mt-md space-y-md">
+              {item.series.map((chartSeries, index) => (
+                <MicroChart key={index} series={chartSeries} height={60} />
+              ))}
+            </div>
+          )}
+
+          {/* Legacy Series Data (backward compatibility) */}
+          {item.legacySeries && item.legacySeries.length > 0 && (
             <div className="grid grid-cols-2 gap-md pt-sm">
-              {item.series.map((data, index) => (
+              {item.legacySeries.map((data, index) => (
                 <div key={index} className="space-y-xs">
                   <span className="text-meta-sm text-text-disabled">{data.label}</span>
                   <span className="text-meta text-text-primary font-medium block">

@@ -31,6 +31,13 @@ export interface LocalSessionLog {
   peopleIdsPlayedAgainst: string[];
   supportingInputIds: string[];
   synced?: boolean; // For guest→account migration tracking
+  appliedRecommendations?: string[]; // IDs of recommendations followed
+  pendingRecommendation?: {
+    id: string;
+    type: 'intensity' | 'consistency' | 'recovery';
+    label: string;
+    createdAt: string;
+  };
 }
 
 export interface LocalPerson {
@@ -65,21 +72,44 @@ export interface LocalInsightArtifact {
   sessionsCount: number;
 }
 
+export interface LocalRecommendationOutcome {
+  id: string;
+  recommendationId: string;
+  title: string;
+  body: string;
+  ctaLabel?: string;
+  linkTo?: string;
+  createdAt: string;
+  dismissedAt?: string;
+  dismissible: boolean;
+}
+
 // Dexie database class
 class VibeLocalDB extends Dexie {
   sessionLogs!: Table<LocalSessionLog, string>;
   people!: Table<LocalPerson, string>;
   supportingInputs!: Table<LocalSupportingInput, string>;
   insights!: Table<LocalInsightArtifact, string>;
+  recommendationOutcomes!: Table<LocalRecommendationOutcome, string>;
 
   constructor() {
     super('VibeLocalDB');
 
+    // Version 1: Original schema
     this.version(1).stores({
       sessionLogs: 'id, playedAt, createdAt, synced',
       people: 'id, name, synced',
       supportingInputs: 'id, isEnabled, synced',
       insights: 'id, createdAt'
+    });
+
+    // Version 2: Add recommendation outcomes table
+    this.version(2).stores({
+      sessionLogs: 'id, playedAt, createdAt, synced',
+      people: 'id, name, synced',
+      supportingInputs: 'id, isEnabled, synced',
+      insights: 'id, createdAt',
+      recommendationOutcomes: 'id, recommendationId, createdAt, dismissedAt'
     });
   }
 }
@@ -177,5 +207,32 @@ export const localDBHelpers = {
     await localDB.supportingInputs.bulkUpdate(
       ids.map(id => ({ key: id, changes: { synced: true } }))
     );
+  },
+
+  // Recommendation outcomes
+  async addRecommendationOutcome(outcome: LocalRecommendationOutcome) {
+    return await localDB.recommendationOutcomes.add(outcome);
+  },
+
+  async getActiveRecommendationOutcomes() {
+    // Get all outcomes and filter for non-dismissed ones
+    const allOutcomes = await localDB.recommendationOutcomes
+      .orderBy('createdAt')
+      .reverse()
+      .toArray();
+
+    return allOutcomes.filter(
+      outcome => !outcome.dismissedAt || outcome.dismissedAt === ''
+    );
+  },
+
+  async dismissRecommendationOutcome(id: string) {
+    await localDB.recommendationOutcomes.update(id, {
+      dismissedAt: new Date().toISOString()
+    });
+  },
+
+  async getRecommendationOutcome(id: string) {
+    return await localDB.recommendationOutcomes.get(id);
   }
 };

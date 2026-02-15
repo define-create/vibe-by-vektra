@@ -1,27 +1,42 @@
 /**
- * Insights Page - Zen Precision redesign with preserved functionality
- * Timeline narrative view for AI-generated insights
+ * Insights Page - Week 2 Enhancement
+ * Mode toggle: Rule-based (default) vs AI insights
+ * Rule-based: deterministic, always available, no quota
+ * AI: preserved functionality with quota limits
  */
 
 'use client';
 
-import { useState, useEffect } from 'react';
-import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { useState, useEffect, useMemo } from 'react';
+import { ChevronLeft, ChevronRight, TrendingUp } from 'lucide-react';
 import { useAuth } from '@/lib/hooks/useAuth';
+import { useSessionLogs } from '@/lib/hooks/useSessionLogs';
 import { getAnonId } from '@/lib/utils/anon-id';
-import { localDB } from '@/lib/db/local-db';
+import { localDB, type LocalRecommendationOutcome } from '@/lib/db/local-db';
 import { InsightArtifact, InsightRun } from '@/types';
+import { cn } from '@/lib/utils';
 import { ScreenContainer } from '@/src/components/layout/ScreenContainer';
 import { VerticalStack } from '@/src/components/layout/VerticalStack';
 import { TimelineBlock } from '@/src/components/domain/TimelineBlock';
+import { InsightThesisHero } from '@/src/components/domain/InsightThesisHero';
+import { InsightActionsCard } from '@/src/components/domain/InsightActionsCard';
 import { Card } from '@/src/components/ui/Card';
 import { Button } from '@/src/components/ui/Button';
 import { IconButton } from '@/src/components/ui/IconButton';
 import { Skeleton } from '@/src/components/ui/Skeleton';
 import { GuestLockedState } from '@/components/insights/GuestLockedState';
+import { generateInsights } from '@/lib/insights/rule-based-generator';
+
+type InsightMode = 'rule-based' | 'ai';
+
+const INSIGHT_MODE_KEY = 'vibe_insight_mode';
 
 export default function InsightsPage() {
   const { mode, user } = useAuth();
+  const { sessions, isLoading: sessionsLoading } = useSessionLogs();
+
+  // Mode toggle state (default: rule-based)
+  const [insightMode, setInsightMode] = useState<InsightMode>('rule-based');
   const [isLoading, setIsLoading] = useState(true);
   const [quotaStatus, setQuotaStatus] = useState<{
     daily: { used: number; limit: number };
@@ -33,6 +48,31 @@ export default function InsightsPage() {
   const [insights, setInsights] = useState<InsightArtifact[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [currentRange, setCurrentRange] = useState('Last 14 days');
+  const [achievements, setAchievements] = useState<LocalRecommendationOutcome[]>([]);
+
+  // Generate rule-based insights from session data
+  const ruleBasedInsight = useMemo(() => {
+    if (sessionsLoading || !sessions) return null;
+    return generateInsights(sessions);
+  }, [sessions, sessionsLoading]);
+
+  // Load saved mode preference
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem(INSIGHT_MODE_KEY) as InsightMode | null;
+      if (saved === 'ai' || saved === 'rule-based') {
+        setInsightMode(saved);
+      }
+    }
+  }, []);
+
+  // Save mode preference when changed
+  const handleModeChange = (newMode: InsightMode) => {
+    setInsightMode(newMode);
+    if (typeof window !== 'undefined') {
+      localStorage.setItem(INSIGHT_MODE_KEY, newMode);
+    }
+  };
 
   useEffect(() => {
     fetchQuotaStatus();
@@ -40,6 +80,59 @@ export default function InsightsPage() {
       fetchLatestInsights();
     }
   }, [user, mode]);
+
+  // Load achievements from IndexedDB
+  useEffect(() => {
+    async function loadAchievements() {
+      // Get all outcomes from IndexedDB (dismissed and active)
+      const allOutcomes = await localDB.recommendationOutcomes
+        .orderBy('createdAt')
+        .reverse()
+        .toArray();
+
+      // Clean up duplicates (keep most recent for each recommendationId)
+      const byRecommendationId = new Map<string, LocalRecommendationOutcome>();
+      const duplicatesToDelete: string[] = [];
+
+      for (const outcome of allOutcomes) {
+        const existing = byRecommendationId.get(outcome.recommendationId);
+        if (existing) {
+          // Keep the most recent one
+          if (new Date(outcome.createdAt) > new Date(existing.createdAt)) {
+            duplicatesToDelete.push(existing.id);
+            byRecommendationId.set(outcome.recommendationId, outcome);
+          } else {
+            duplicatesToDelete.push(outcome.id);
+          }
+        } else {
+          byRecommendationId.set(outcome.recommendationId, outcome);
+        }
+      }
+
+      // Delete duplicates from IndexedDB
+      if (duplicatesToDelete.length > 0) {
+        console.log('[Insights] Cleaning up duplicate outcomes:', duplicatesToDelete.length);
+        await localDB.recommendationOutcomes.bulkDelete(duplicatesToDelete);
+      }
+
+      // Filter for last 30 days
+      const thirtyDaysAgo = new Date();
+      thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+
+      const recentAchievements = Array.from(byRecommendationId.values()).filter(
+        outcome => new Date(outcome.createdAt) >= thirtyDaysAgo
+      );
+
+      // Sort by most recent first
+      recentAchievements.sort((a, b) =>
+        new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+      );
+
+      setAchievements(recentAchievements);
+    }
+
+    loadAchievements();
+  }, []);
 
   async function fetchQuotaStatus() {
     try {
@@ -145,9 +238,13 @@ export default function InsightsPage() {
   return (
     <ScreenContainer
       title="Insights"
-      subtitle="AI-powered pattern analysis & guidance"
+      subtitle={
+        insightMode === 'rule-based'
+          ? 'Pattern analysis & actionable guidance'
+          : 'AI-powered pattern analysis & guidance'
+      }
       rightActions={
-        hasInsights ? (
+        hasInsights && insightMode === 'ai' ? (
           <div className="flex items-center gap-xs">
             <IconButton icon={<ChevronLeft size={20} />} label="Previous period" />
             <span className="text-meta text-text-secondary px-sm">{currentRange}</span>
@@ -156,7 +253,27 @@ export default function InsightsPage() {
         ) : undefined
       }
     >
-      {isLoading ? (
+      {/* Mode Toggle */}
+      <div className="flex gap-sm mb-lg">
+        <Button
+          variant={insightMode === 'rule-based' ? 'primary' : 'secondary'}
+          size="default"
+          onClick={() => handleModeChange('rule-based')}
+          className="flex-1"
+        >
+          Pattern Analysis
+        </Button>
+        <Button
+          variant={insightMode === 'ai' ? 'primary' : 'secondary'}
+          size="default"
+          onClick={() => handleModeChange('ai')}
+          className="flex-1"
+        >
+          AI Insights
+        </Button>
+      </div>
+
+      {isLoading || sessionsLoading ? (
         <VerticalStack spacing="lg">
           <Skeleton className="h-24 w-full" />
           <Skeleton className="h-48 w-full" />
@@ -164,6 +281,75 @@ export default function InsightsPage() {
         </VerticalStack>
       ) : (
         <VerticalStack spacing="lg">
+          {/* Rule-Based Insights Mode */}
+          {insightMode === 'rule-based' && ruleBasedInsight && (
+            <>
+              {/* Thesis Hero */}
+              <InsightThesisHero thesis={ruleBasedInsight.thesis} />
+
+              {/* Timeline */}
+              <div className="space-y-xs">
+                <h3 className="text-section text-text-primary">Analysis & Guidance</h3>
+                <VerticalStack spacing="md">
+                  {ruleBasedInsight.timeline.map((item) => (
+                    <TimelineBlock key={item.id} item={item} />
+                  ))}
+                </VerticalStack>
+              </div>
+
+              {/* Actions */}
+              <InsightActionsCard
+                actions={ruleBasedInsight.actions}
+                onActionClick={(actionId) => {
+                  console.log('Action clicked:', actionId);
+                  // Future: Navigate or show confirmation
+                }}
+              />
+
+              {/* Achievements List (shows all outcomes from last 30 days) */}
+              {achievements.length > 0 && (
+                <div className="space-y-xs">
+                  <h3 className="text-section text-text-primary">Recent Achievements</h3>
+                  <p className="text-meta-sm text-text-secondary mb-sm">
+                    Your progress over the last 30 days
+                  </p>
+                  <VerticalStack spacing="sm">
+                    {achievements.map((achievement) => (
+                      <Card
+                        key={achievement.id}
+                        variant="default"
+                        padding="compact"
+                        className={cn(
+                          achievement.dismissedAt ? 'opacity-60' : ''
+                        )}
+                      >
+                        <div className="flex items-start gap-sm">
+                          <div className="p-xs rounded bg-accent-primary/10">
+                            <TrendingUp size={14} className="text-accent-primary" />
+                          </div>
+                          <div className="flex-1">
+                            <h4 className="text-meta text-text-primary font-medium">
+                              {achievement.title}
+                            </h4>
+                            <p className="text-meta-sm text-text-secondary mt-xs">
+                              {achievement.body}
+                            </p>
+                            <p className="text-meta-sm text-text-disabled mt-xs">
+                              {new Date(achievement.createdAt).toLocaleDateString()}
+                            </p>
+                          </div>
+                        </div>
+                      </Card>
+                    ))}
+                  </VerticalStack>
+                </div>
+              )}
+            </>
+          )}
+
+          {/* AI Insights Mode (preserved functionality) */}
+          {insightMode === 'ai' && (
+            <>
           {/* Generate Button or Guest Locked State */}
           {!hasInsights && (
             <>
@@ -272,6 +458,9 @@ export default function InsightsPage() {
                 </div>
               )}
             </>
+          )}
+          {/* End AI Mode */}
+          </>
           )}
         </VerticalStack>
       )}

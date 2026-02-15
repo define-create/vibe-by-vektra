@@ -2,28 +2,101 @@
  * Dashboard Page (Screen 1)
  * Narrative Stack + Hero Journey Emphasis
  * Uses real session data from local DB
+ * Week 2 enhancement: recommendation outcome feedback
  */
 
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { Calendar } from 'lucide-react';
 import { ScreenContainer } from '@/src/components/layout/ScreenContainer';
 import { VerticalStack } from '@/src/components/layout/VerticalStack';
 import { MetricStrip } from '@/src/components/domain/MetricStrip';
 import { HeroJourneyCard } from '@/src/components/domain/HeroJourneyCard';
 import { ChartCard } from '@/src/components/domain/ChartCard';
+import { OutcomeCard } from '@/src/components/insights/OutcomeCard';
 import { Card } from '@/src/components/ui/Card';
 import { IconButton } from '@/src/components/ui/IconButton';
 import { BottomSheet } from '@/src/components/ui/BottomSheet';
 import { Skeleton } from '@/src/components/ui/Skeleton';
 import { useSessionLogs } from '@/lib/hooks/useSessionLogs';
 import { useRouter } from 'next/navigation';
+import {
+  getPendingRecommendation,
+  generateOutcome,
+  getActiveOutcomes,
+  shouldShowBanner,
+  markBannerShown,
+  dismissOutcome,
+  type PendingRecommendation,
+} from '@/lib/insights/recommendation-tracker';
+import type { LocalRecommendationOutcome } from '@/lib/db/local-db';
+import { RecommendationBanner } from '@/src/components/insights/RecommendationBanner';
 
 export default function DashboardPage() {
   const router = useRouter();
   const [dateFilterOpen, setDateFilterOpen] = useState(false);
   const { sessions, isLoading } = useSessionLogs();
+  const [activeOutcome, setActiveOutcome] = useState<LocalRecommendationOutcome | null>(null);
+  const [showBanner, setShowBanner] = useState(false);
+  const [pendingRec, setPendingRec] = useState<PendingRecommendation | null>(null);
+
+  // Check for recommendation outcomes
+  useEffect(() => {
+    async function checkForOutcomes() {
+      console.log('[Dashboard] checkForOutcomes started');
+      console.log('[Dashboard] Sessions count:', sessions?.length);
+
+      if (!sessions || sessions.length === 0) {
+        console.log('[Dashboard] No sessions, returning early');
+        return;
+      }
+
+      // Check for pending recommendation
+      const pending = getPendingRecommendation();
+      console.log('[Dashboard] Pending recommendation:', pending);
+
+      if (pending) {
+        // Check if we should show banner (not shown yet)
+        if (shouldShowBanner()) {
+          console.log('[Dashboard] Should show banner');
+          setPendingRec(pending);
+          setShowBanner(true);
+          // Mark banner as shown
+          markBannerShown();
+        }
+
+        console.log('[Dashboard] Generating outcome for pending recommendation...');
+        // Generate outcome if recommendation was followed
+        const outcome = await generateOutcome(sessions, pending);
+        console.log('[Dashboard] Generated outcome:', outcome);
+
+        if (outcome) {
+          console.log('[Dashboard] Setting active outcome:', outcome.title);
+          setActiveOutcome(outcome);
+          // Hide banner if outcome generated
+          setShowBanner(false);
+          return;
+        } else {
+          console.log('[Dashboard] No outcome generated - recommendation not followed yet');
+        }
+      }
+
+      // Otherwise, get existing active outcomes
+      console.log('[Dashboard] Checking for existing outcomes...');
+      const outcomes = await getActiveOutcomes();
+      console.log('[Dashboard] Existing outcomes:', outcomes);
+
+      if (outcomes.length > 0) {
+        console.log('[Dashboard] Setting active outcome from existing:', outcomes[0].title);
+        setActiveOutcome(outcomes[0]);
+      } else {
+        console.log('[Dashboard] No active outcomes found');
+      }
+    }
+
+    checkForOutcomes();
+  }, [sessions]);
 
   // Calculate real metrics from sessions
   const metrics = useMemo(() => {
@@ -153,6 +226,28 @@ export default function DashboardPage() {
           <Card variant="default" padding="default">
             <MetricStrip metrics={metrics as [any, any, any]} />
           </Card>
+
+          {/* Recommendation Banner (Option 4: shows once, auto-dismisses) */}
+          {showBanner && pendingRec && (
+            <RecommendationBanner
+              recommendation={pendingRec}
+              onDismiss={() => setShowBanner(false)}
+            />
+          )}
+
+          {/* Recommendation Outcome (Week 2 feature) */}
+          {activeOutcome && (
+            <OutcomeCard
+              outcome={activeOutcome}
+              onDismiss={async () => {
+                // Dismiss from Dashboard UI
+                setActiveOutcome(null);
+                // Mark as dismissed in IndexedDB (persists for achievements list)
+                await dismissOutcome(activeOutcome.id);
+              }}
+              onCtaClick={() => router.push(activeOutcome.linkTo || '/insights')}
+            />
+          )}
 
           {/* Hero Journey Progress */}
           {heroJourney && (
