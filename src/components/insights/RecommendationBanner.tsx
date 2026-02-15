@@ -64,7 +64,7 @@ export function RecommendationBanner({
         >
           <Card
             variant="default"
-            padding="compact"
+            padding="default"
             className="border-l-4 border-accent-primary bg-accent-primary/5"
           >
             <div className="flex items-start gap-sm">
