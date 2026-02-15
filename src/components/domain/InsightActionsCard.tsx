@@ -55,7 +55,7 @@ export function InsightActionsCard({
         Recommended Actions
       </h3>
 
-      <VerticalStack spacing="xs">
+      <VerticalStack spacing="sm">
         {actions.map((action) => (
           <button
             key={action.id}
