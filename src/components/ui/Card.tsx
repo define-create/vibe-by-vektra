@@ -95,7 +95,7 @@ export const Card = React.forwardRef<HTMLDivElement, CardProps>(
       );
     }
 
-    return <div {...commonProps} {...props} />;
+    return <div {...commonProps} {...(props as React.HTMLAttributes<HTMLDivElement>)} />;
   }
 );
 
