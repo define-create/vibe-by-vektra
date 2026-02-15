@@ -405,7 +405,7 @@ export default function InsightsPage() {
                   {insights[0]?.title || 'Your session insights are ready'}
                 </h2>
                 <p className="text-body text-text-secondary">
-                  {insights[0]?.content?.substring(0, 200) ||
+                  {insights[0]?.observationText?.substring(0, 200) ||
                     'Based on your recent sessions, we\'ve identified key patterns.'}
                 </p>
                 {latestRun && (
@@ -436,7 +436,7 @@ export default function InsightsPage() {
                       item={{
                         variant: index % 3 === 1 ? 'callout' : index % 3 === 2 ? 'guidance' : 'evidence',
                         title: insight.title,
-                        body: insight.content,
+                        body: insight.observationText,
                       }}
                     />
                   ))}
