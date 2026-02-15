@@ -5,9 +5,11 @@ import { cn } from '@/lib/utils';
 import type { SorenessLevel } from '@/types';
 
 interface SorenessInputProps {
+  hands: SorenessLevel;
   knees: SorenessLevel;
   shoulder: SorenessLevel;
   back: SorenessLevel;
+  onHandsChange: (value: SorenessLevel) => void;
   onKneesChange: (value: SorenessLevel) => void;
   onShoulderChange: (value: SorenessLevel) => void;
   onBackChange: (value: SorenessLevel) => void;
@@ -25,24 +27,28 @@ const SORENESS_LEVELS: Array<{
 ];
 
 const BODY_AREAS: Array<{
-  key: 'knees' | 'shoulder' | 'back';
+  key: 'hands' | 'knees' | 'shoulder' | 'back';
   label: string;
 }> = [
+  { key: 'hands', label: 'Hands' },
   { key: 'knees', label: 'Knees' },
   { key: 'shoulder', label: 'Shoulder' },
   { key: 'back', label: 'Back' },
 ];
 
 export function SorenessInput({
+  hands,
   knees,
   shoulder,
   back,
+  onHandsChange,
   onKneesChange,
   onShoulderChange,
   onBackChange,
 }: SorenessInputProps) {
-  const values = { knees, shoulder, back };
+  const values = { hands, knees, shoulder, back };
   const handlers = {
+    hands: onHandsChange,
     knees: onKneesChange,
     shoulder: onShoulderChange,
     back: onBackChange,
