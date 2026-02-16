@@ -30,11 +30,11 @@ export const MENTAL_TAGS_CONFIG: Array<{
     label: 'Frustrated',
     description: 'Irritated or bothered'
   },
-  {
-    value: 'flow-state',
-    label: 'Flow State',
-    description: 'Fully immersed and engaged'
-  },
+ // {
+ //   value: 'flow-state',
+ //   label: 'Flow State',
+ //   description: 'Fully immersed and engaged'
+ // },
   {
     value: 'fatigued',
     label: 'Fatigued',

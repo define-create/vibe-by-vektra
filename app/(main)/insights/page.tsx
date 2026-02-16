@@ -7,7 +7,7 @@
 
 'use client';
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import { ChevronLeft, ChevronRight, TrendingUp } from 'lucide-react';
 import { useAuth } from '@/lib/hooks/useAuth';
 import { useSessionLogs } from '@/lib/hooks/useSessionLogs';
@@ -74,12 +74,33 @@ export default function InsightsPage() {
     }
   };
 
+  const fetchQuotaStatus = useCallback(async () => {
+    try {
+      const anonId = mode === 'guest' ? getAnonId() : null;
+      const params = new URLSearchParams();
+      if (anonId) params.set('anonId', anonId);
+
+      const response = await fetch(`/api/insights/check-quota?${params}`);
+      const data = await response.json();
+
+      setQuotaStatus(data);
+    } catch (err) {
+      console.error('Failed to fetch quota status:', err);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [mode]);
+
+  const fetchLatestInsights = useCallback(async () => {
+    setIsLoading(false);
+  }, []);
+
   useEffect(() => {
     fetchQuotaStatus();
     if (user) {
       fetchLatestInsights();
     }
-  }, [user, mode]);
+  }, [user, mode, fetchQuotaStatus, fetchLatestInsights]);
 
   // Load achievements from IndexedDB
   useEffect(() => {
@@ -133,27 +154,6 @@ export default function InsightsPage() {
 
     loadAchievements();
   }, []);
-
-  async function fetchQuotaStatus() {
-    try {
-      const anonId = mode === 'guest' ? getAnonId() : null;
-      const params = new URLSearchParams();
-      if (anonId) params.set('anonId', anonId);
-
-      const response = await fetch(`/api/insights/check-quota?${params}`);
-      const data = await response.json();
-
-      setQuotaStatus(data);
-    } catch (err) {
-      console.error('Failed to fetch quota status:', err);
-    } finally {
-      setIsLoading(false);
-    }
-  }
-
-  async function fetchLatestInsights() {
-    setIsLoading(false);
-  }
 
   async function handleGenerate() {
     setError(null);

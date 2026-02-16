@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '@/lib/hooks/useAuth';
 import { Person } from '@/types';
 import { Button } from '@/components/ui/button';
@@ -22,11 +22,7 @@ export default function PeoplePage() {
   const [editingPerson, setEditingPerson] = useState<Person | undefined>();
   const [deletingPerson, setDeletingPerson] = useState<Person | null>(null);
 
-  useEffect(() => {
-    fetchPeople();
-  }, [user, mode]);
-
-  async function fetchPeople() {
+  const fetchPeople = useCallback(async () => {
     setIsLoading(true);
     try {
       if (mode === 'authenticated' && user) {
@@ -52,7 +48,11 @@ export default function PeoplePage() {
     } finally {
       setIsLoading(false);
     }
-  }
+  }, [mode, user]);
+
+  useEffect(() => {
+    fetchPeople();
+  }, [fetchPeople]);
 
   async function handleSave(data: {
     name: string;

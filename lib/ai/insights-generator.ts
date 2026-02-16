@@ -66,7 +66,7 @@ export async function generateInsights(
       // Claude might wrap JSON in markdown code blocks, so strip those
       const jsonText = rawText.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
       insights = JSON.parse(jsonText);
-    } catch (parseError) {
+    } catch {
       console.error('[Insights] Failed to parse AI response:', rawText);
       throw new Error('AI returned invalid JSON format');
     }

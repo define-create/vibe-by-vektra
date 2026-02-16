@@ -1,6 +1,5 @@
 import { localDB, localDBHelpers } from './local-db';
-import { supabase, dbHelpers } from './supabase';
-import { v4 as uuidv4 } from 'uuid';
+import { dbHelpers } from './supabase';
 
 /**
  * Guest → Account Migration
@@ -32,7 +31,7 @@ export const syncManager = {
 
       for (const person of unsyncedPeople) {
         try {
-          const { data, error } = await dbHelpers.createPerson({
+          const { error } = await dbHelpers.createPerson({
             id: person.id,
             user_id: userId,
             name: person.name,
@@ -56,7 +55,7 @@ export const syncManager = {
 
       for (const input of unsyncedInputs) {
         try {
-          const { data, error } = await dbHelpers.createSupportingInput({
+          const { error } = await dbHelpers.createSupportingInput({
             id: input.id,
             user_id: userId,
             name: input.name,
@@ -81,7 +80,7 @@ export const syncManager = {
       for (const session of unsyncedSessions) {
         try {
           // Create session log
-          const { data: sessionData, error: sessionError } = await dbHelpers.createSessionLog({
+          const { error: sessionError } = await dbHelpers.createSessionLog({
             id: session.id,
             user_id: userId,
             created_at: session.createdAt,

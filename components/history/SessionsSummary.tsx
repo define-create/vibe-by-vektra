@@ -1,6 +1,6 @@
 'use client';
 
-import { startOfMonth, endOfMonth, eachDayOfInterval, format, isSameDay } from 'date-fns';
+import { startOfMonth, endOfMonth, eachDayOfInterval, format } from 'date-fns';
 import { cn } from '@/lib/utils';
 import type { LocalSessionLog } from '@/lib/db/local-db';
 

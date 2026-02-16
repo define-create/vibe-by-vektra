@@ -83,7 +83,7 @@ Update the file after completing each sub-task, not just after completing an ent
   - [x] 7.1 Run `npm run build` locally to check for TypeScript errors
   - [x] 7.2 Fix any TypeScript compilation errors if they occur
   - [x] 7.3 Verify build completes successfully with no errors
-  - [ ] 7.4 Stage changes: `git add .`
-  - [ ] 7.5 Commit changes with descriptive message (e.g., "feat: add hands to soreness tracking")
-  - [ ] 7.6 Push to Git to trigger Vercel deployment
+  - [x] 7.4 Stage changes: `git add .`
+  - [x] 7.5 Commit changes with descriptive message (e.g., "feat: add hands to soreness tracking")
+  - [x] 7.6 Push to Git to trigger Vercel deployment
   - [ ] 7.7 Monitor Vercel deployment and verify it succeeds

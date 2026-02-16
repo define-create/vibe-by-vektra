@@ -17,10 +17,8 @@ import { IconButton } from '@/src/components/ui/IconButton';
 import { BottomSheet } from '@/src/components/ui/BottomSheet';
 import { Skeleton } from '@/src/components/ui/Skeleton';
 import { useSessionLogs } from '@/lib/hooks/useSessionLogs';
-import { useRouter } from 'next/navigation';
 
 export default function JourneysPage() {
-  const router = useRouter();
   const [filterOpen, setFilterOpen] = useState(false);
   const { sessions, isLoading } = useSessionLogs();
 

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '@/lib/hooks/useAuth';
 import { SupportingInput } from '@/types';
 import { Button } from '@/components/ui/button';
@@ -20,13 +20,8 @@ export default function SignalsPage() {
   const [formOpen, setFormOpen] = useState(false);
   const [editingSignal, setEditingSignal] = useState<SupportingInput | undefined>();
   const [deletingSignal, setDeletingSignal] = useState<SupportingInput | null>(null);
-  const [hasSeededInputs, setHasSeededInputs] = useState(false);
 
-  useEffect(() => {
-    fetchSignals();
-  }, [user, mode]);
-
-  async function fetchSignals() {
+  const fetchSignals = useCallback(async () => {
     setIsLoading(true);
     try {
       if (mode === 'authenticated' && user) {
@@ -35,7 +30,6 @@ export default function SignalsPage() {
         if (!error && data) {
           const inputs = data as SupportingInput[];
           setSignals(inputs);
-          setHasSeededInputs(inputs.some(s => s.seededPreloaded));
 
           // Seed defaults if none exist
           if (inputs.length === 0) {
@@ -55,7 +49,6 @@ export default function SignalsPage() {
           createdAt: s.createdAt,
         }));
         setSignals(inputs);
-        setHasSeededInputs(inputs.some(s => s.seededPreloaded));
 
         // Seed defaults if none exist
         if (inputs.length === 0) {
@@ -67,7 +60,11 @@ export default function SignalsPage() {
     } finally {
       setIsLoading(false);
     }
-  }
+  }, [mode, user]);
+
+  useEffect(() => {
+    fetchSignals();
+  }, [fetchSignals]);
 
   async function seedDefaultInputs() {
     const seededSignals = SEEDED_SUPPORTING_INPUTS.map(input => ({
