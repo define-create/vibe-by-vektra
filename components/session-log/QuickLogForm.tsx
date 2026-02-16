@@ -152,6 +152,7 @@ export function QuickLogForm() {
           energyAfter: 3,   // Reset to mid-point, not 0
           moodBefore: 3,    // Reset to mid-point, not 0
           moodAfter: 3,     // Reset to mid-point, not 0
+          sorenessHands: 0,
           sorenessKnees: 0,
           sorenessShoulder: 0,
           sorenessBack: 0,
