@@ -1,8 +1,14 @@
 /**
- * Dashboard Page (Screen 1)
- * Narrative Stack + Hero Journey Emphasis
- * Uses real session data from local DB
- * Week 2 enhancement: recommendation outcome feedback
+ * Dashboard Page v1.1 - Deterministic Briefing Surface
+ *
+ * Answers the question: "What has meaningfully changed recently?"
+ *
+ * Features:
+ * - Time window comparison (14 days recent vs baseline)
+ * - Notable shifts detection (threshold-based)
+ * - Neutral, observational language
+ * - Sample-size gating for reliable comparisons
+ * - Recommendation outcomes (Week 2 feature)
  */
 
 'use client';
@@ -12,15 +18,25 @@ import { Calendar } from 'lucide-react';
 import { ScreenContainer } from '@/src/components/layout/ScreenContainer';
 import { VerticalStack } from '@/src/components/layout/VerticalStack';
 import { MetricStrip } from '@/src/components/domain/MetricStrip';
-import { HeroJourneyCard } from '@/src/components/domain/HeroJourneyCard';
-import { ChartCard } from '@/src/components/domain/ChartCard';
-import { OutcomeCard } from '@/src/components/insights/OutcomeCard';
 import { Card } from '@/src/components/ui/Card';
 import { IconButton } from '@/src/components/ui/IconButton';
 import { BottomSheet } from '@/src/components/ui/BottomSheet';
 import { Skeleton } from '@/src/components/ui/Skeleton';
+import { Button } from '@/src/components/ui/Button';
 import { useSessionLogs } from '@/lib/hooks/useSessionLogs';
 import { useRouter } from 'next/navigation';
+import { getDashboardData } from '@/lib/analytics/dashboard-metrics';
+
+// Dashboard v1.1 components
+import { NotableShiftsCard } from '@/src/components/domain/dashboard/NotableShiftsCard';
+import { EnergyResponseCard } from '@/src/components/domain/dashboard/EnergyResponseCard';
+import { RecoverySignalsCard } from '@/src/components/domain/dashboard/RecoverySignalsCard';
+import { ContextComparisonsCard } from '@/src/components/domain/dashboard/ContextComparisonsCard';
+import { RecentSessionsList } from '@/src/components/domain/dashboard/RecentSessionsList';
+
+// Recommendation features (Week 2)
+import { OutcomeCard } from '@/src/components/insights/OutcomeCard';
+import { RecommendationBanner } from '@/src/components/insights/RecommendationBanner';
 import {
   getPendingRecommendation,
   generateOutcome,
@@ -31,180 +47,267 @@ import {
   type PendingRecommendation,
 } from '@/lib/insights/recommendation-tracker';
 import type { LocalRecommendationOutcome } from '@/lib/db/local-db';
-import { RecommendationBanner } from '@/src/components/insights/RecommendationBanner';
 
 export default function DashboardPage() {
   const router = useRouter();
-  const [dateFilterOpen, setDateFilterOpen] = useState(false);
   const { sessions, isLoading } = useSessionLogs();
+
+  // Time window state
+  const [daysBack, setDaysBack] = useState<7 | 14 | 28>(14);
+  const [timeWindowSheetOpen, setTimeWindowSheetOpen] = useState(false);
+
+  // Recommendation state (Week 2 feature - keep existing)
   const [activeOutcome, setActiveOutcome] = useState<LocalRecommendationOutcome | null>(null);
   const [showBanner, setShowBanner] = useState(false);
   const [pendingRec, setPendingRec] = useState<PendingRecommendation | null>(null);
 
-  // Check for recommendation outcomes
+  // Check for recommendation outcomes (existing Week 2 logic)
   useEffect(() => {
     async function checkForOutcomes() {
-      console.log('[Dashboard] checkForOutcomes started');
-      console.log('[Dashboard] Sessions count:', sessions?.length);
+      if (!sessions || sessions.length === 0) return;
 
-      if (!sessions || sessions.length === 0) {
-        console.log('[Dashboard] No sessions, returning early');
-        return;
-      }
-
-      // Check for pending recommendation
       const pending = getPendingRecommendation();
-      console.log('[Dashboard] Pending recommendation:', pending);
-
       if (pending) {
-        // Check if we should show banner (not shown yet)
         if (shouldShowBanner()) {
-          console.log('[Dashboard] Should show banner');
           setPendingRec(pending);
           setShowBanner(true);
-          // Mark banner as shown
           markBannerShown();
         }
 
-        console.log('[Dashboard] Generating outcome for pending recommendation...');
-        // Generate outcome if recommendation was followed
         const outcome = await generateOutcome(sessions, pending);
-        console.log('[Dashboard] Generated outcome:', outcome);
-
         if (outcome) {
-          console.log('[Dashboard] Setting active outcome:', outcome.title);
           setActiveOutcome(outcome);
-          // Hide banner if outcome generated
           setShowBanner(false);
           return;
-        } else {
-          console.log('[Dashboard] No outcome generated - recommendation not followed yet');
         }
       }
 
-      // Otherwise, get existing active outcomes
-      console.log('[Dashboard] Checking for existing outcomes...');
       const outcomes = await getActiveOutcomes();
-      console.log('[Dashboard] Existing outcomes:', outcomes);
-
       if (outcomes.length > 0) {
-        console.log('[Dashboard] Setting active outcome from existing:', outcomes[0].title);
         setActiveOutcome(outcomes[0]);
-      } else {
-        console.log('[Dashboard] No active outcomes found');
       }
     }
 
     checkForOutcomes();
   }, [sessions]);
 
-  // Calculate real metrics from sessions
-  const metrics = useMemo(() => {
-    if (sessions.length === 0) {
-      return [
-        { label: 'Sessions', value: '0', delta: undefined, deltaDirection: 'neutral' as const },
-        { label: 'Avg Energy', value: '-', delta: undefined, deltaDirection: 'neutral' as const },
-        { label: 'Recovery', value: '-', delta: undefined, deltaDirection: 'neutral' as const },
-      ];
+  // Compute dashboard data (new v1.1 logic)
+  const dashboardData = useMemo(() => {
+    if (sessions.length < 4) {
+      // For < 4 sessions, return minimal structure
+      return {
+        windowConfig: {
+          recent: { sessionCount: sessions.length, label: 'Recent' },
+          baseline: null,
+          daysBack,
+          mode: 'insufficient-data' as const,
+        },
+        recentMetrics: {
+          sessionCount: sessions.length,
+          sessions,
+          avgEnergyBefore: sessions.length > 0 ? sessions.reduce((sum, s) => sum + s.energyBefore, 0) / sessions.length : 0,
+          avgEnergyAfter: sessions.length > 0 ? sessions.reduce((sum, s) => sum + s.energyAfter, 0) / sessions.length : 0,
+          avgEnergyDelta: sessions.length > 0 ? sessions.reduce((sum, s) => sum + (s.energyAfter - s.energyBefore), 0) / sessions.length : 0,
+          avgMoodBefore: 0,
+          avgMoodAfter: 0,
+          avgMoodDelta: 0,
+          sorenessFrequency: { hands: 0, knees: 0, shoulder: 0, back: 0 },
+          avgDuration: 0,
+          intensityDistribution: { casual: 0, moderate: 0, competitive: 0 },
+          formatDistribution: { singles: 0, doubles: 0 },
+          topMentalTags: [],
+        },
+        baselineMetrics: null,
+        comparison: null,
+        notableShifts: [],
+        sampleSizeWarnings: {
+          recentTooSmall: true,
+          baselineTooSmall: true,
+          categoryComparisonsUnsupported: true,
+        },
+        latestSessions: sessions.slice(0, 3),
+      };
     }
 
-    // Calculate average energy after
-    const avgEnergy = sessions.reduce((sum, s) => sum + s.energyAfter, 0) / sessions.length;
+    return getDashboardData(sessions, daysBack);
+  }, [sessions, daysBack]);
 
-    // Calculate recovery score (inverse of average soreness)
-    const avgSoreness = sessions.reduce((sum, s) =>
-      sum + (s.sorenessKnees + s.sorenessShoulder + s.sorenessBack) / 3, 0
-    ) / sessions.length;
-    const recoveryScore = Math.round((1 - avgSoreness / 3) * 100);
+  // Build Recent Activity Summary metrics (Section B)
+  const recentActivityMetrics = useMemo(() => {
+    const { recentMetrics } = dashboardData;
 
-    // Get recent sessions for comparison (last 7 days vs previous 7 days)
-    const now = new Date();
-    const last7Days = sessions.filter(s => {
-      const sessionDate = new Date(s.playedAt);
-      const daysAgo = (now.getTime() - sessionDate.getTime()) / (1000 * 60 * 60 * 24);
-      return daysAgo <= 7;
-    });
-    const previous7Days = sessions.filter(s => {
-      const sessionDate = new Date(s.playedAt);
-      const daysAgo = (now.getTime() - sessionDate.getTime()) / (1000 * 60 * 60 * 24);
-      return daysAgo > 7 && daysAgo <= 14;
-    });
+    // Session mix calculation
+    const singlesCount = recentMetrics.formatDistribution.singles;
+    const doublesCount = recentMetrics.formatDistribution.doubles;
+    const competitiveCount = recentMetrics.intensityDistribution.competitive;
 
-    const sessionsDelta = last7Days.length - previous7Days.length;
-    const energyDelta = last7Days.length > 0 && previous7Days.length > 0
-      ? (last7Days.reduce((sum, s) => sum + s.energyAfter, 0) / last7Days.length) -
-        (previous7Days.reduce((sum, s) => sum + s.energyAfter, 0) / previous7Days.length)
+    const doublesPercent = recentMetrics.sessionCount > 0
+      ? Math.round((doublesCount / recentMetrics.sessionCount) * 100)
       : 0;
+    const competitivePercent = recentMetrics.sessionCount > 0
+      ? Math.round((competitiveCount / recentMetrics.sessionCount) * 100)
+      : 0;
+
+    const mixLabel = `${doublesPercent}% doubles, ${competitivePercent}% competitive`;
 
     return [
       {
         label: 'Sessions',
-        value: sessions.length.toString(),
-        delta: sessionsDelta !== 0 ? `${sessionsDelta > 0 ? '+' : ''}${sessionsDelta}` : undefined,
-        deltaDirection: sessionsDelta > 0 ? 'up' as const : sessionsDelta < 0 ? 'down' as const : 'neutral' as const,
+        value: recentMetrics.sessionCount.toString(),
+        delta: undefined,
+        deltaDirection: 'neutral' as const,
       },
       {
-        label: 'Avg Energy',
-        value: avgEnergy.toFixed(1),
-        delta: energyDelta !== 0 ? `${energyDelta > 0 ? '+' : ''}${energyDelta.toFixed(1)}` : undefined,
-        deltaDirection: energyDelta > 0 ? 'up' as const : energyDelta < 0 ? 'down' as const : 'neutral' as const,
+        label: 'Avg Duration',
+        value: recentMetrics.avgDuration > 0 ? `${Math.round(recentMetrics.avgDuration)} min` : '-',
+        delta: undefined,
+        deltaDirection: 'neutral' as const,
       },
       {
-        label: 'Recovery',
-        value: `${recoveryScore}%`,
+        label: 'Mix',
+        value: mixLabel,
         delta: undefined,
         deltaDirection: 'neutral' as const,
       },
     ];
-  }, [sessions]);
+  }, [dashboardData]);
 
-  // Create hero journey from recent sessions
-  const heroJourney = useMemo(() => {
+  // Render functions for different states
+  const renderEmptyState = () => (
+    <Card variant="callout" padding="hero" className="space-y-md text-center">
+      <h2 className="text-body-lg font-semibold text-text-primary">
+        Welcome to Vibe
+      </h2>
+      <p className="text-body text-text-secondary">
+        Log your first volleyball session to start tracking your performance.
+      </p>
+      <Button
+        onClick={() => router.push('/history')}
+        className="mt-md"
+      >
+        Log Session
+      </Button>
+    </Card>
+  );
+
+  const renderInsufficientDataState = () => (
+    <VerticalStack spacing="lg">
+      {/* Recent Activity Summary (limited) */}
+      <Card variant="default" padding="default">
+        <MetricStrip metrics={recentActivityMetrics as [any, any, any]} />
+      </Card>
+
+      {/* Notable Shifts (empty state) */}
+      <NotableShiftsCard
+        shifts={[]}
+        isEmpty={true}
+      />
+
+      {/* Energy Response (recent only, no comparison) */}
+      <EnergyResponseCard
+        metrics={dashboardData.recentMetrics}
+        comparison={null}
+      />
+
+      {/* Recent Sessions */}
+      <RecentSessionsList sessions={dashboardData.latestSessions} />
+    </VerticalStack>
+  );
+
+  const renderFullDashboard = () => (
+    <VerticalStack spacing="lg">
+      {/* Recommendation Banner (Week 2 - keep existing) */}
+      {showBanner && pendingRec && (
+        <RecommendationBanner
+          recommendation={pendingRec}
+          onDismiss={() => setShowBanner(false)}
+        />
+      )}
+
+      {/* Recommendation Outcome (Week 2 - keep existing) */}
+      {activeOutcome && (
+        <OutcomeCard
+          outcome={activeOutcome}
+          onDismiss={async () => {
+            setActiveOutcome(null);
+            await dismissOutcome(activeOutcome.id);
+          }}
+          onCtaClick={() => router.push(activeOutcome.linkTo || '/insights')}
+        />
+      )}
+
+      {/* B. Recent Activity Summary */}
+      <Card variant="default" padding="default">
+        <MetricStrip metrics={recentActivityMetrics as [any, any, any]} />
+      </Card>
+
+      {/* C. Notable Shifts (PRIMARY CARD) */}
+      <NotableShiftsCard
+        shifts={dashboardData.notableShifts}
+        isEmpty={dashboardData.sampleSizeWarnings.recentTooSmall || dashboardData.sampleSizeWarnings.baselineTooSmall}
+      />
+
+      {/* D. Energy Response */}
+      <EnergyResponseCard
+        metrics={dashboardData.recentMetrics}
+        comparison={dashboardData.comparison}
+      />
+
+      {/* E. Recovery Signals */}
+      <RecoverySignalsCard
+        metrics={dashboardData.recentMetrics}
+        comparison={dashboardData.comparison}
+      />
+
+      {/* F. Context Comparisons (conditional) */}
+      {!dashboardData.sampleSizeWarnings.categoryComparisonsUnsupported && (
+        <ContextComparisonsCard
+          metrics={dashboardData.recentMetrics}
+          sampleSizeSupported={!dashboardData.sampleSizeWarnings.categoryComparisonsUnsupported}
+        />
+      )}
+
+      {/* G. Recent Sessions */}
+      <RecentSessionsList sessions={dashboardData.latestSessions} />
+    </VerticalStack>
+  );
+
+  // Build subtitle based on window config
+  const subtitle = useMemo(() => {
     if (sessions.length === 0) {
-      return null;
+      return 'Your volleyball journey at a glance';
     }
 
-    // Find sessions with shoulder soreness to track recovery
-    const shoulderSessions = sessions.filter(s => s.sorenessShoulder > 0);
-    const recentSessions = sessions.slice(0, 10);
+    const { windowConfig } = dashboardData;
 
-    const avgShoulder = shoulderSessions.length > 0
-      ? shoulderSessions.reduce((sum, s) => sum + s.sorenessShoulder, 0) / shoulderSessions.length
-      : 0;
+    if (windowConfig.mode === 'insufficient-data') {
+      return `${windowConfig.recent.sessionCount} sessions logged`;
+    }
 
-    const completionPercent = Math.round((1 - avgShoulder / 3) * 100);
+    if (windowConfig.mode === 'dynamic-split') {
+      return `${windowConfig.recent.sessionCount} recent sessions (vs ${windowConfig.baseline?.sessionCount || 0} previous)`;
+    }
 
-    return {
-      id: 'shoulder-recovery',
-      title: 'Shoulder Recovery & Form',
-      status: completionPercent > 80 ? 'completed' as const : 'in-progress' as const,
-      completionPercent,
-      milestones: [
-        { id: 'm1', label: 'Initial Assessment', isComplete: true },
-        { id: 'm2', label: 'Pain-Free Serving', isComplete: completionPercent > 50 },
-        { id: 'm3', label: 'Full Power', isComplete: completionPercent > 80 },
-        { id: 'm4', label: 'Competition Ready', isComplete: completionPercent >= 95 },
-      ],
-      deltaText: `${recentSessions.length} sessions tracked`,
-    };
-  }, [sessions]);
+    // Standard mode
+    if (windowConfig.baseline) {
+      return `Last ${daysBack} days · Compared to prior ${daysBack} days`;
+    }
 
-  // Get recent insights preview (mock for now - replace with real insights)
-  const insights = [
-    { id: '1', title: 'Energy peaks mid-week', preview: 'Your best sessions are Tuesday-Thursday' },
-    { id: '2', title: 'Recovery trending up', preview: 'Shoulder soreness down vs last month' },
-  ];
+    return `Last ${daysBack} days`;
+  }, [sessions.length, dashboardData, daysBack]);
 
   return (
     <ScreenContainer
       title="Dashboard"
-      subtitle="Your volleyball journey at a glance"
+      subtitle={subtitle}
       rightActions={
-        <IconButton
-          icon={<Calendar size={20} />}
-          label="Filter date range"
-          onClick={() => setDateFilterOpen(true)}
-        />
+        sessions.length >= 10 ? (
+          <IconButton
+            icon={<Calendar size={20} />}
+            label="Change time window"
+            onClick={() => setTimeWindowSheetOpen(true)}
+          />
+        ) : undefined
       }
     >
       {isLoading ? (
@@ -214,98 +317,61 @@ export default function DashboardPage() {
           <Skeleton className="h-64 w-full" />
         </VerticalStack>
       ) : sessions.length === 0 ? (
-        <div className="text-center py-xl">
-          <p className="text-body text-text-secondary">No sessions logged yet.</p>
-          <p className="text-meta text-text-disabled mt-sm">
-            Log your first session to see your dashboard.
-          </p>
-        </div>
+        renderEmptyState()
+      ) : sessions.length < 4 ? (
+        renderInsufficientDataState()
       ) : (
-        <VerticalStack spacing="lg">
-          {/* Key Metrics Summary */}
-          <Card variant="default" padding="default">
-            <MetricStrip metrics={metrics as [any, any, any]} />
-          </Card>
-
-          {/* Recommendation Banner (Option 4: shows once, auto-dismisses) */}
-          {showBanner && pendingRec && (
-            <RecommendationBanner
-              recommendation={pendingRec}
-              onDismiss={() => setShowBanner(false)}
-            />
-          )}
-
-          {/* Recommendation Outcome (Week 2 feature) */}
-          {activeOutcome && (
-            <OutcomeCard
-              outcome={activeOutcome}
-              onDismiss={async () => {
-                // Dismiss from Dashboard UI
-                setActiveOutcome(null);
-                // Mark as dismissed in IndexedDB (persists for achievements list)
-                await dismissOutcome(activeOutcome.id);
-              }}
-              onCtaClick={() => router.push(activeOutcome.linkTo || '/insights')}
-            />
-          )}
-
-          {/* Hero Journey Progress */}
-          {heroJourney && (
-            <HeroJourneyCard
-              journey={heroJourney}
-              primaryCtaLabel="View details →"
-              onPress={() => router.push('/journeys')}
-              onPrimaryCta={() => router.push('/journeys')}
-            />
-          )}
-
-          {/* Trend Chart */}
-          <ChartCard
-            title="Energy Trends"
-            legend={[
-              { label: 'Before', color: '#82AAFF' },
-              { label: 'After', color: '#4FD1C5' },
-            ]}
-            caption={`Last ${Math.min(sessions.length, 14)} sessions`}
-          >
-            {/* Placeholder for actual chart - integrate with recharts */}
-            <div className="h-full flex items-center justify-center text-text-disabled">
-              <span className="text-meta">Chart placeholder - integrate with Recharts</span>
-            </div>
-          </ChartCard>
-
-          {/* Insights Preview */}
-          <div className="space-y-sm">
-            <h2 className="text-section text-text-primary">Recent Insights</h2>
-            <VerticalStack spacing="sm">
-              {insights.map((insight) => (
-                <Card
-                  key={insight.id}
-                  variant="default"
-                  padding="default"
-                  clickable
-                  onClick={() => router.push('/insights')}
-                  className="space-y-xs"
-                >
-                  <h4 className="text-meta text-text-primary font-medium">{insight.title}</h4>
-                  <p className="text-meta-sm text-text-secondary">{insight.preview}</p>
-                </Card>
-              ))}
-            </VerticalStack>
-          </div>
-        </VerticalStack>
+        renderFullDashboard()
       )}
 
-      {/* Date Filter Bottom Sheet */}
+      {/* Time Window Selector Bottom Sheet */}
       <BottomSheet
-        open={dateFilterOpen}
-        onOpenChange={setDateFilterOpen}
-        title="Filter by Date Range"
+        open={timeWindowSheetOpen}
+        onOpenChange={setTimeWindowSheetOpen}
+        title="Analysis Window"
         snapPoint="40%"
       >
         <div className="space-y-md">
-          <p className="text-body text-text-secondary">
-            Date range filter UI goes here (e.g., date picker, preset ranges)
+          <p className="text-body-sm text-text-secondary mb-md">
+            Choose the time window for comparison
+          </p>
+
+          {/* Time window options */}
+          <div className="space-y-sm">
+            {[
+              { value: 7, label: 'Last 7 days', sublabel: 'vs previous 7 days' },
+              { value: 14, label: 'Last 14 days', sublabel: 'vs previous 14 days' },
+              { value: 28, label: 'Last 28 days', sublabel: 'vs previous 28 days' },
+            ].map((option) => (
+              <button
+                key={option.value}
+                onClick={() => {
+                  setDaysBack(option.value as 7 | 14 | 28);
+                  setTimeWindowSheetOpen(false);
+                }}
+                className={`
+                  w-full p-md rounded-lg border-2 transition-all text-left
+                  ${daysBack === option.value
+                    ? 'border-accent-primary bg-accent-primary/5'
+                    : 'border-border bg-surface-1 hover:bg-surface-2'
+                  }
+                `}
+              >
+                <p className="text-body-sm font-medium text-text-primary">
+                  {option.label}
+                  {daysBack === option.value && (
+                    <span className="ml-xs text-accent-primary">✓</span>
+                  )}
+                </p>
+                <p className="text-meta-sm text-text-secondary mt-xxs">
+                  {option.sublabel}
+                </p>
+              </button>
+            ))}
+          </div>
+
+          <p className="text-meta-xs text-text-disabled mt-md">
+            Comparison windows adjust automatically based on your session history.
           </p>
         </div>
       </BottomSheet>

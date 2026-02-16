@@ -13,6 +13,10 @@
 # testing
 /coverage
 
+#rules and check lists
+/code_rules
+
+
 # next.js
 /.next/
 /out/

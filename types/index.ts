@@ -29,6 +29,7 @@ export interface SessionLog {
   energyAfter: number;
   moodBefore: number;
   moodAfter: number;
+  sorenessHands: SorenessLevel;
   sorenessKnees: SorenessLevel;
   sorenessShoulder: SorenessLevel;
   sorenessBack: SorenessLevel;
@@ -90,6 +91,7 @@ export interface SessionLogFormData {
   energyAfter: number;
   moodBefore: number;
   moodAfter: number;
+  sorenessHands: SorenessLevel;
   sorenessKnees: SorenessLevel;
   sorenessShoulder: SorenessLevel;
   sorenessBack: SorenessLevel;
@@ -124,6 +126,7 @@ export interface AggregatedData {
   formatDistribution: Record<SessionFormat, number>;
   environmentDistribution: Record<Environment, number>;
   sorenessFrequency: {
+    hands: Record<string, number>;
     knees: Record<string, number>;
     shoulder: Record<string, number>;
     back: Record<string, number>;

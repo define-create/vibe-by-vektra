@@ -222,6 +222,7 @@ function mapSupabaseSession(data: any): SessionLog {
     energyAfter: data.energy_after,
     moodBefore: data.mood_before,
     moodAfter: data.mood_after,
+    sorenessHands: data.soreness_hands || 0,
     sorenessKnees: data.soreness_knees,
     sorenessShoulder: data.soreness_shoulder,
     sorenessBack: data.soreness_back,

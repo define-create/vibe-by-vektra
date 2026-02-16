@@ -18,6 +18,7 @@ export interface LocalSessionLog {
   energyAfter: number;
   moodBefore: number;
   moodAfter: number;
+  sorenessHands: SorenessLevel;
   sorenessKnees: SorenessLevel;
   sorenessShoulder: SorenessLevel;
   sorenessBack: SorenessLevel;
@@ -110,6 +111,22 @@ class VibeLocalDB extends Dexie {
       supportingInputs: 'id, isEnabled, synced',
       insights: 'id, createdAt',
       recommendationOutcomes: 'id, recommendationId, createdAt, dismissedAt'
+    });
+
+    // Version 3: Add sorenessHands field to session logs
+    this.version(3).stores({
+      sessionLogs: 'id, playedAt, createdAt, synced',
+      people: 'id, name, synced',
+      supportingInputs: 'id, isEnabled, synced',
+      insights: 'id, createdAt',
+      recommendationOutcomes: 'id, recommendationId, createdAt, dismissedAt'
+    }).upgrade(tx => {
+      // Migration: set sorenessHands = 0 for existing records
+      return tx.table('sessionLogs').toCollection().modify(log => {
+        if (log.sorenessHands === undefined) {
+          log.sorenessHands = 0;
+        }
+      });
     });
   }
 }

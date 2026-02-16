@@ -141,6 +141,7 @@ export async function testInsightGeneration(): Promise<void> {
     formatDistribution: { singles: 6, doubles: 4 },
     environmentDistribution: { indoor: 8, outdoor: 2 },
     sorenessFrequency: {
+      hands: { none: 9, low: 1, moderate: 0, high: 0 },
       knees: { none: 7, low: 2, moderate: 1, high: 0 },
       shoulder: { none: 9, low: 1, moderate: 0, high: 0 },
       back: { none: 8, low: 2, moderate: 0, high: 0 },
