@@ -328,7 +328,27 @@ export function calculateTimeWindows(
   // Validation: both windows need >= 3 sessions
   if (recentSessions.length < 3 || baselineSessions.length < 3) {
     // Fall back to dynamic split if time-based windowing doesn't yield enough data
-    return calculateTimeWindows(sessions, daysBack);
+    const splitIndex = Math.floor(totalCount / 2);
+    const recentSessionsSplit = sortedSessions.slice(0, splitIndex);
+    const baselineSessionsSplit = sortedSessions.slice(splitIndex);
+
+    return {
+      recent: {
+        startDate: new Date(recentSessionsSplit[recentSessionsSplit.length - 1].playedAt),
+        endDate: new Date(recentSessionsSplit[0].playedAt),
+        label: 'Recent sessions',
+        sessions: recentSessionsSplit,
+        sessionCount: recentSessionsSplit.length,
+      },
+      baseline: {
+        startDate: new Date(baselineSessionsSplit[baselineSessionsSplit.length - 1].playedAt),
+        endDate: new Date(baselineSessionsSplit[0].playedAt),
+        label: 'Previous sessions',
+        sessions: baselineSessionsSplit,
+        sessionCount: baselineSessionsSplit.length,
+      },
+      mode: 'dynamic-split',
+    };
   }
 
   return {
