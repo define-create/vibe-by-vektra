@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { MENTAL_TAGS } from '@/types';
+import { MENTAL_TAGS, type MentalTag } from '@/types';
 
 // Zod schema for session log form
 export const sessionLogSchema = z.object({
@@ -16,7 +16,7 @@ export const sessionLogSchema = z.object({
   format: z.enum(['singles', 'doubles']),
   environment: z.enum(['indoor', 'outdoor']),
   durationMinutes: z.number().optional(),
-  mentalTags: z.array(z.enum(MENTAL_TAGS as any)),
+  mentalTags: z.array(z.enum([...MENTAL_TAGS] as [MentalTag, ...MentalTag[]])),
   freeTextReflection: z.string().max(500).optional(),
   peopleIdsPlayedWith: z.array(z.string()),
   peopleIdsPlayedAgainst: z.array(z.string()),

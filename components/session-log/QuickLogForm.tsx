@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { v4 as uuidv4 } from 'uuid';
@@ -27,7 +27,7 @@ export function QuickLogForm() {
     setValue,
     handleSubmit,
     reset,
-    formState: { errors, isValid },
+    formState: { errors },
   } = useForm<SessionLogFormData>({
     resolver: zodResolver(sessionLogSchema),
     mode: 'onChange', // Validate on change

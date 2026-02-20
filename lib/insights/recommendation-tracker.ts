@@ -18,7 +18,7 @@ export interface PendingRecommendation {
   type: RecommendationType;
   label: string;
   createdAt: string;
-  targetValue?: any; // Optional expected outcome
+  targetValue?: unknown; // Optional expected outcome
   bannerShownAt?: string; // Timestamp when banner was first shown on Dashboard
 }
 
@@ -50,7 +50,7 @@ export function setPendingRecommendation(
   recommendationId: string,
   type: RecommendationType,
   label: string,
-  targetValue?: any
+  targetValue?: unknown
 ): void {
   const pending: PendingRecommendation = {
     id: recommendationId,
@@ -184,7 +184,6 @@ export function checkRecommendationFollowed(
   switch (recommendation.type) {
     case 'intensity': {
       // Check if intensity was reduced or adjusted as recommended
-      const latestSession = sessionsAfter[0];
       const sessionsBefore = sessions.filter(s => new Date(s.playedAt) <= recDate);
 
       if (sessionsBefore.length === 0) return false;

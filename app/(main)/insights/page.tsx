@@ -47,7 +47,7 @@ export default function InsightsPage() {
   const [latestRun, setLatestRun] = useState<InsightRun | null>(null);
   const [insights, setInsights] = useState<InsightArtifact[]>([]);
   const [error, setError] = useState<string | null>(null);
-  const [currentRange, setCurrentRange] = useState('Last 14 days');
+  const [currentRange] = useState('Last 14 days');
   const [achievements, setAchievements] = useState<LocalRecommendationOutcome[]>([]);
 
   // Generate rule-based insights from session data
@@ -79,6 +79,7 @@ export default function InsightsPage() {
     if (user) {
       fetchLatestInsights();
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user, mode]);
 
   // Load achievements from IndexedDB

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { adminClient, createClient } from '@/lib/db/supabase';
-import { SessionLog } from '@/types';
+import { SessionLog, SorenessLevel, IntensityLevel, SessionFormat, Environment, MentalTag } from '@/types';
 import { aggregateSessionsForInsight } from '@/lib/ai/aggregator';
 import { generateInsights } from '@/lib/ai/insights-generator';
 import { checkQuota, consumeGuestQuota } from '@/lib/ai/quota-manager';
@@ -209,10 +209,33 @@ export async function POST(request: NextRequest) {
   }
 }
 
+interface SupabaseSessionRow {
+  id: string;
+  user_id: string;
+  created_at: string;
+  played_at: string;
+  energy_before: number;
+  energy_after: number;
+  mood_before: number;
+  mood_after: number;
+  soreness_hands: SorenessLevel;
+  soreness_knees: SorenessLevel;
+  soreness_shoulder: SorenessLevel;
+  soreness_back: SorenessLevel;
+  intensity: IntensityLevel;
+  format: SessionFormat;
+  environment: Environment;
+  duration_minutes: number;
+  mental_tags: MentalTag[];
+  free_text_reflection: string;
+  people_ids_played_with: string[];
+  people_ids_played_against: string[];
+}
+
 /**
  * Map Supabase session to SessionLog type
  */
-function mapSupabaseSession(data: any): SessionLog {
+function mapSupabaseSession(data: SupabaseSessionRow): SessionLog {
   return {
     id: data.id,
     userId: data.user_id,

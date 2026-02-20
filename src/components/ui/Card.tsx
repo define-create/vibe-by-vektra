@@ -71,7 +71,7 @@ export const Card = React.forwardRef<HTMLDivElement, CardProps>(
     );
 
     const commonProps = {
-      ref: ref as any,
+      ref: ref as React.Ref<HTMLDivElement>,
       className: cn(
         cardVariants({ variant, padding, radius, clickable: isClickable }),
         className

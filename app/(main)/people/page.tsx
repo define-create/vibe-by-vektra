@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/lib/hooks/useAuth';
-import { Person } from '@/types';
+import { Person, RolePreference } from '@/types';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { PersonCard } from '@/components/people/PersonCard';
@@ -24,6 +24,7 @@ export default function PeoplePage() {
 
   useEffect(() => {
     fetchPeople();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user, mode]);
 
   async function fetchPeople() {
@@ -56,7 +57,7 @@ export default function PeoplePage() {
 
   async function handleSave(data: {
     name: string;
-    rolePreference?: any;
+    rolePreference?: RolePreference;
     rating?: number;
   }) {
     if (editingPerson) {

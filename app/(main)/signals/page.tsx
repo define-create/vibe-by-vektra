@@ -20,10 +20,10 @@ export default function SignalsPage() {
   const [formOpen, setFormOpen] = useState(false);
   const [editingSignal, setEditingSignal] = useState<SupportingInput | undefined>();
   const [deletingSignal, setDeletingSignal] = useState<SupportingInput | null>(null);
-  const [hasSeededInputs, setHasSeededInputs] = useState(false);
 
   useEffect(() => {
     fetchSignals();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user, mode]);
 
   async function fetchSignals() {
@@ -35,7 +35,6 @@ export default function SignalsPage() {
         if (!error && data) {
           const inputs = data as SupportingInput[];
           setSignals(inputs);
-          setHasSeededInputs(inputs.some(s => s.seededPreloaded));
 
           // Seed defaults if none exist
           if (inputs.length === 0) {
@@ -55,7 +54,6 @@ export default function SignalsPage() {
           createdAt: s.createdAt,
         }));
         setSignals(inputs);
-        setHasSeededInputs(inputs.some(s => s.seededPreloaded));
 
         // Seed defaults if none exist
         if (inputs.length === 0) {

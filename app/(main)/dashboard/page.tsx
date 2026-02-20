@@ -17,7 +17,7 @@ import { useState, useMemo, useEffect } from 'react';
 import { Calendar } from 'lucide-react';
 import { ScreenContainer } from '@/src/components/layout/ScreenContainer';
 import { VerticalStack } from '@/src/components/layout/VerticalStack';
-import { MetricStrip } from '@/src/components/domain/MetricStrip';
+import { MetricStrip, type Metric } from '@/src/components/domain/MetricStrip';
 import { Card } from '@/src/components/ui/Card';
 import { IconButton } from '@/src/components/ui/IconButton';
 import { BottomSheet } from '@/src/components/ui/BottomSheet';
@@ -133,11 +133,10 @@ export default function DashboardPage() {
   }, [sessions, daysBack]);
 
   // Build Recent Activity Summary metrics (Section B)
-  const recentActivityMetrics = useMemo(() => {
+  const recentActivityMetrics = useMemo((): [Metric, Metric, Metric] => {
     const { recentMetrics } = dashboardData;
 
     // Session mix calculation
-    const singlesCount = recentMetrics.formatDistribution.singles;
     const doublesCount = recentMetrics.formatDistribution.doubles;
     const competitiveCount = recentMetrics.intensityDistribution.competitive;
 
@@ -194,7 +193,7 @@ export default function DashboardPage() {
     <VerticalStack spacing="lg">
       {/* Recent Activity Summary (limited) */}
       <Card variant="default" padding="default">
-        <MetricStrip metrics={recentActivityMetrics as [any, any, any]} />
+        <MetricStrip metrics={recentActivityMetrics} />
       </Card>
 
       {/* Notable Shifts (empty state) */}
@@ -238,7 +237,7 @@ export default function DashboardPage() {
 
       {/* B. Recent Activity Summary */}
       <Card variant="default" padding="default">
-        <MetricStrip metrics={recentActivityMetrics as [any, any, any]} />
+        <MetricStrip metrics={recentActivityMetrics} />
       </Card>
 
       {/* C. Notable Shifts (PRIMARY CARD) */}

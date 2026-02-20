@@ -190,7 +190,7 @@ export function generateInsights(sessionsRaw: LocalSessionLog[]): GeneratedInsig
   // ============================================================================
 
   const recent = lastN(sessions, 10);
-  const rolling: ChartPoint[] = recent.map((s, idx) => {
+  const rolling: ChartPoint[] = recent.map((s) => {
     const subset = sessions.slice(0, sessions.indexOf(s) + 1);
     const value = countSessionsInLastDays(subset, 7);
     const date = new Date(s.playedAt);

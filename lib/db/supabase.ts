@@ -86,7 +86,7 @@ export const dbHelpers = {
       .order('played_at', { ascending: false });
   },
 
-  async createSessionLog(data: any) {
+  async createSessionLog(data: Record<string, unknown>) {
     return await supabase
       .from('session_logs')
       .insert(data)
@@ -103,7 +103,7 @@ export const dbHelpers = {
       .order('name');
   },
 
-  async createPerson(data: any) {
+  async createPerson(data: Record<string, unknown>) {
     return await supabase
       .from('people')
       .insert(data)
@@ -111,7 +111,7 @@ export const dbHelpers = {
       .single();
   },
 
-  async updatePerson(id: string, data: any) {
+  async updatePerson(id: string, data: Record<string, unknown>) {
     return await supabase
       .from('people')
       .update(data)
@@ -136,7 +136,7 @@ export const dbHelpers = {
       .order('name');
   },
 
-  async createSupportingInput(data: any) {
+  async createSupportingInput(data: Record<string, unknown>) {
     return await supabase
       .from('supporting_inputs_catalog')
       .insert(data)
@@ -144,7 +144,7 @@ export const dbHelpers = {
       .single();
   },
 
-  async updateSupportingInput(id: string, data: any) {
+  async updateSupportingInput(id: string, data: Record<string, unknown>) {
     return await supabase
       .from('supporting_inputs_catalog')
       .update(data)
@@ -188,7 +188,7 @@ export const dbHelpers = {
     return await query;
   },
 
-  async createInsightRun(data: any) {
+  async createInsightRun(data: Record<string, unknown>) {
     return await supabase
       .from('insight_runs')
       .insert(data)
@@ -196,7 +196,7 @@ export const dbHelpers = {
       .single();
   },
 
-  async createInsightArtifacts(artifacts: any[]) {
+  async createInsightArtifacts(artifacts: Record<string, unknown>[]) {
     return await supabase
       .from('insight_artifacts')
       .insert(artifacts)

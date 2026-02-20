@@ -67,7 +67,7 @@ export interface LocalInsightArtifact {
   observationText: string;
   confidence: Confidence;
   evidenceSummary?: string;
-  metrics?: any;
+  metrics?: Record<string, unknown>;
   windowStart: string;
   windowEnd: string;
   sessionsCount: number;

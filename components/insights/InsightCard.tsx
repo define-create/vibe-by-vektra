@@ -10,7 +10,7 @@ interface InsightCardProps {
   observationText: string;
   confidence: Confidence;
   evidenceSummary?: string;
-  metrics?: Record<string, any>;
+  metrics?: Record<string, unknown>;
 }
 
 export function InsightCard({

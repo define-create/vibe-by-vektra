@@ -1,5 +1,4 @@
 import { v4 as uuidv4 } from 'uuid';
-import { localDB } from '@/lib/db/local-db';
 
 /**
  * Anonymous ID Manager
@@ -8,7 +7,6 @@ import { localDB } from '@/lib/db/local-db';
  */
 
 const ANON_ID_KEY = 'vibe_anon_id';
-const ANON_ID_STORAGE_TABLE = 'anon_meta';
 
 // Store anon_id in both localStorage (fast) and IndexedDB (persistent)
 export const anonIdManager = {
@@ -96,7 +94,8 @@ export const anonIdManager = {
   /**
    * Save to IndexedDB (for persistence across localStorage clears)
    */
-  async saveToIndexedDB(anonId: string): Promise<void> {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  async saveToIndexedDB(_anonId: string): Promise<void> {
     if (typeof window === 'undefined') return;
     try {
       // For simplicity, we're primarily using localStorage

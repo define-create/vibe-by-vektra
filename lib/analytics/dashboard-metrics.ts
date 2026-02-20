@@ -5,7 +5,7 @@
  * This module answers the question: "What has meaningfully changed recently?"
  */
 
-import type { IntensityLevel, SessionFormat, SorenessLevel } from '@/types';
+import type { IntensityLevel, SessionFormat } from '@/types';
 import type { LocalSessionLog } from '@/lib/db/local-db';
 
 // ============================================================================

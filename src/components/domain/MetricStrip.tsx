@@ -8,7 +8,7 @@
 import { TrendingUp, TrendingDown } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
-interface Metric {
+export interface Metric {
   label: string;
   value: string | number;
   delta?: string | number;
